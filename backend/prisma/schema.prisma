@@ -18,6 +18,7 @@ model User{
 model Deployment{
   id          String @id @default(uuid())
   github_url  String
+  status      String
   userId      String
   user        User @relation(fields: [userId], references: [id])
 }
