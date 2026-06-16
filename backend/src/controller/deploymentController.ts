@@ -6,5 +6,8 @@ export const deploymentController = async (req: Request, res: Response) => {
 
   const result = await deploymentService(github_url, userId);
 
-  return res.status(201).json(result);
+  return res.status(201).json({
+    message: "Deployment started",
+    deploymentId: result.id,
+  });
 };
