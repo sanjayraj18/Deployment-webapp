@@ -6,10 +6,6 @@ if (!process.env.PORT) {
   throw new Error("port number not found");
 }
 
-if (!process.env.DATABASE_URL) {
-  throw new Error("DB url not found");
-}
-
 if (!process.env.REDIS_PORT) {
   throw new Error("redis port not found");
 }
@@ -24,7 +20,6 @@ if (!process.env.REDIS_PASSWORD) {
 
 const config = {
   PORT: process.env.PORT,
-  DATABASE_URL: process.env.DATABASE_URL,
   REDIS_PORT: Number(process.env.REDIS_PORT),
   REDIS_HOST: process.env.REDIS_HOST,
   REDIS_PASSWORD: process.env.REDIS_PASSWORD,
