@@ -1,24 +1,18 @@
 {
   "compilerOptions": {
+    // File Layout
     "rootDir": "./src",
     "outDir": "./dist",
-
-    "module": "nodenext",
+    "module": "commonjs",
     "target": "esnext",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "types": [],
-
-    // and npm install -D @types/node
-
-    // Other Outputs
     "sourceMap": true,
     "declaration": true,
     "declarationMap": true,
-
-    // Stricter Typechecking Options
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
-
-    // Recommended Options
     "strict": true,
     "jsx": "react-jsx",
     "isolatedModules": true,
@@ -26,5 +20,6 @@
     "moduleDetection": "force",
     "skipLibCheck": true
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*", "prisma.config.ts"],
+  "exclude": ["node_modules", "prisma", "prisma.config.ts"]
 }
