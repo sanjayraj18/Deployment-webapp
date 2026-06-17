@@ -3,9 +3,8 @@ import path from "node:path";
 import simpleGit from "simple-git";
 import redisClient from "./config/redis.js";
 import prisma from "./db/db.js";
+import uploadManager from "./aws-upload/uploadManager.js";
 
-// const execPromise = promisify(exec);
-// const { stdout } = await execPromise(buildCommand);
 const git = simpleGit();
 
 async function startWorker() {
@@ -16,8 +15,6 @@ async function startWorker() {
     while (true) {
       const result: any = await redisClient.brPop("deployments", 0);
       const job = JSON.parse(result?.element);
-
-      // In CommonJS, __dirname is globally available.
       const outputDir = path.resolve(__dirname, `../output/${job.id}`);
 
       try {
@@ -32,47 +29,43 @@ async function startWorker() {
         await git.clone(job.url, outputDir);
         console.log(`[Worker] Cloned successfully.`);
 
-        // 2. Building
-        const child = spawn("sh", [
-          "-c",
-          `cd ${outputDir} && npm install && npm run build`,
-        ]);
+        // 2. Building (Using Spawn for Live logs)
+        const child = spawn("sh", ["-c", `cd ${outputDir} && npm install && npm run build`]);
 
         child.stdout.on("data", (data) => {
-          const logLine = data.toString();
-          console.log(logLine);
-
-          redisClient.publish(`logs:${job.id}`, logLine);
+          const log = data.toString();
+          console.log(log);
+          redisClient.publish(`logs:${job.id}`, log);
         });
 
         child.stderr.on("data", (data) => {
-          const logLine = data.toString();
-          console.error(logLine);
-
-          redisClient.publish(`logs:${job.id}`, logLine);
+          const log = data.toString();
+          console.error(log);
+          redisClient.publish(`logs:${job.id}`, log);
         });
 
         const exitCode = await new Promise((resolve) => {
-          child.on("close", (code) => {
-            resolve(code);
-          });
+          child.on("close", resolve);
         });
 
         if (exitCode !== 0) {
-          throw new Error(`Build failed with exit code ${exitCode}`);
+          throw new Error(`Build failed with code ${exitCode}`);
         }
 
-        console.log(`[Worker] Build complete.`);
+        // 3. Upload to S3
+        const distPath = path.join(outputDir, "dist");
+        await uploadManager(distPath, job.id);
 
-        // 3. Finalize Success
+        // 4. Finalize Success
         await prisma.deployment.update({
           where: { id: job.id },
           data: { status: "ready" },
         });
+
+        console.log(`[Worker] Job ${job.id} completed.`);
+
       } catch (error) {
         console.error(`[Worker] Job ${job.id} failed:`, error);
-
-        // 4. Finalize Failure
         await prisma.deployment.update({
           where: { id: job.id },
           data: { status: "failed" },

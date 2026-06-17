@@ -27,7 +27,7 @@ async function uploadManager(localFolderPath: string, deploymentId: string) {
       await s3Client.send(
         //parcel
         new PutObjectCommand({
-          Bucket: "your-deployment-bucket",
+          Bucket: "deployment-webapp-bucket",
           Key: s3Key,
           Body: fileContent,
           ContentType: mime.lookup(filePath) || "application/octet-stream",
